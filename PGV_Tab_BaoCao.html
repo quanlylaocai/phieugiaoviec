@@ -11,7 +11,7 @@
          </div>
       </div>
       <div class="ms-auto">
-         <button class="btn btn-sm btn-outline-primary" onclick="taidlBcao(true)" title="Tải lại dữ liệu"><i class="bi bi-arrow-clockwise"></i> Tải lại</button>
+         <button class="btn btn-sm btn-outline-primary" onclick="taidlBcao(true, false)" title="Tải lại dữ liệu"><i class="bi bi-arrow-clockwise"></i> Tải lại</button>
       </div>
     </div>
   </div>
@@ -55,14 +55,17 @@
       };
   }
 
-  function taidlBcao(batbuoc = false) {
-    if (!batbuoc && dataiBcao) return; datTaiDl(true, "Đang tải dữ liệu báo cáo...");
+  // Cập nhật tham số amtham=true để chạy chế độ ẩn
+  function taidlBcao(batbuoc = false, amtham = false) {
+    if (!batbuoc && dataiBcao) return; 
+    if (!amtham) datTaiDl(true, "Đang tải dữ liệu báo cáo...");
     khachApi.layDlBcao(function(kq) {
-      datTaiDl(false); let dlt = Array.isArray(kq) ? kq : kq.dliu; if (!dlt) return;
+      if (!amtham) datTaiDl(false); 
+      let dlt = Array.isArray(kq) ? kq : kq.dliu; if (!dlt) return;
       dlBcaoGoc = dlt; dataiBcao = true; const nams = [...new Set(dlt.map(r => r.nam))].filter(y => y);
       const lchon = $('#locNamBcao').empty().append('<option value="">--Chọn năm--</option>');
       nams.sort().reverse().forEach(y => lchon.append(`<option value="${y}">${y}</option>`)); veBangBcao();
-    }, typeof khiLoiMayChu !== 'undefined' ? khiLoiMayChu : function(e){ console.error(e); anTaiDl(); });
+    }, typeof khiLoiMayChu !== 'undefined' ? khiLoiMayChu : function(e){ console.error(e); if(!amtham) anTaiDl(); });
   }
 
   function veBangBcao() {
