@@ -55,16 +55,23 @@
       };
   }
 
-  // Cập nhật tham số amtham=true để chạy chế độ ẩn
   function taidlBcao(batbuoc = false, amtham = false) {
     if (!batbuoc && dataiBcao) return; 
     if (!amtham) datTaiDl(true, "Đang tải dữ liệu báo cáo...");
+    
     khachApi.layDlBcao(function(kq) {
       if (!amtham) datTaiDl(false); 
       let dlt = Array.isArray(kq) ? kq : kq.dliu; if (!dlt) return;
-      dlBcaoGoc = dlt; dataiBcao = true; const nams = [...new Set(dlt.map(r => r.nam))].filter(y => y);
-      const lchon = $('#locNamBcao').empty().append('<option value="">--Chọn năm--</option>');
-      nams.sort().reverse().forEach(y => lchon.append(`<option value="${y}">${y}</option>`)); veBangBcao();
+      dlBcaoGoc = dlt; dataiBcao = true; 
+      const nams = [...new Set(dlt.map(r => r.nam))].filter(y => y);
+      const lchon = $('#locNamBcao').empty();
+      nams.sort().reverse();
+      nams.forEach(y => lchon.append(`<option value="${y}">${y}</option>`)); 
+      
+      // [TỐI ƯU HÓA] Tự động chọn năm học và vẽ bảng
+      if (nams.length > 0) lchon.val(nams[0]);
+      veBangBcao();
+      
     }, typeof khiLoiMayChu !== 'undefined' ? khiLoiMayChu : function(e){ console.error(e); if(!amtham) anTaiDl(); });
   }
 
