@@ -184,7 +184,8 @@ function veBangNviec(db) {
         let nutx = lq ? `<button class="btn btn-sm btn-danger py-0 px-2" onclick="xoaDongNv(this)" title="Xoá dòng (Quyền Admin)">✕</button>` : ``;
         let dg = `<tr class="dongNv" data-deadline="${nttc}" data-type="${ltd}" data-is-new="false"><td class="text-center align-middle oStt">${sn}</td><td><textarea class="form-control nhapNdung" readonly oninput="cdang(this)" onfocus="cdang(this)" rows="1">${ndc}</textarea></td><td class="text-center align-middle">${nttc}</td><td class="text-center align-middle">${ltd}</td><td class="align-middle"><select class="form-select form-select-sm chonKq shadow-sm" onchange="tinhtTdong()" style="border:none; font-size:13px;"><option value="">-- Chọn --</option><option value="Chất lượng đạt yêu cầu" ${kqchon === 'Chất lượng đạt yêu cầu' ? 'selected' : ''}>Đạt yêu cầu</option><option value="Chất lượng chưa đạt yêu cầu" ${kqchon === 'Chất lượng chưa đạt yêu cầu' ? 'selected' : ''}>Chưa đạt</option></select></td><td class="align-middle"><input type="text" class="form-control form-control-sm nhapNgay shadow-sm text-center" onchange="tinhtTdong()" onkeyup="tinhtTdong()" value="${ndd}" placeholder="dd/mm/yyyy" style="font-size:13px;"></td><td class="text-center align-middle">${nutx}</td></tr>`; bg.append(dg);
     });
-    setTimeout(() => { $('#bangNviec textarea').each(function() { cdang(this); }); tinhtTdong(); khaBcao(); }, 300);
+    // Gỡ độ trễ nhân tạo: Giảm timeout từ 300ms xuống 10ms để render DOM tức thì
+    setTimeout(() => { $('#bangNviec textarea').each(function() { cdang(this); }); tinhtTdong(); khaBcao(); }, 10);
 }
 
 function cdang(ptu) { ptu.style.height = 'auto'; ptu.style.height = (ptu.scrollHeight) + 'px'; }
