@@ -107,4 +107,75 @@
       tb.append(dr + '</tr>');
     }
   }
+
+  // =======================================================================
+  // [KHỐI BỔ SUNG]: THUẬT TOÁN CHỐNG KHUẤT LỀ CHO CÁC Ô THÔNG TIN NỔI
+  // Thiết kế và phát triển: Hoàng Ngọc Lâm - Viết theo khối chuyên biệt
+  // =======================================================================
+  document.addEventListener('mouseover', function(e) {
+      let voBoc = e.target.closest('.voBocYk');
+      if (!voBoc) return;
+      
+      let nd = voBoc.querySelector('.ndYk');
+      if (!nd) return;
+
+      // Lấy kích thước và tọa độ của phần tử bọc
+      let rect = voBoc.getBoundingClientRect();
+      
+      // Kích hoạt hiển thị giả để lấy kích thước thực của nội dung nổi
+      nd.style.visibility = 'hidden';
+      nd.style.display = 'block';
+      // Đặt thuộc tính fixed để nổi lên trên cùng, tránh overflow của thẻ table
+      nd.style.position = 'fixed'; 
+      nd.style.zIndex = '9999';
+      nd.style.width = 'max-content';
+      nd.style.maxWidth = '350px'; 
+      
+      let ndRect = nd.getBoundingClientRect();
+      
+      // Tọa độ mặc định: Hiển thị ngay sát mép dưới và căn giữa theo ô
+      let top = rect.bottom + 5;
+      let left = rect.left + (rect.width / 2) - (ndRect.width / 2);
+
+      // Thuật toán: Xử lý sát lề phải màn hình
+      if (left + ndRect.width > window.innerWidth) {
+          left = window.innerWidth - ndRect.width - 15;
+      }
+      
+      // Thuật toán: Xử lý sát lề trái màn hình
+      if (left < 0) {
+          left = 15;
+      }
+      
+      // Thuật toán: Xử lý sát lề dưới màn hình (Đảo vị trí nổi lên phía trên)
+      if (top + ndRect.height > window.innerHeight) {
+          top = rect.top - ndRect.height - 5;
+      }
+
+      // Áp dụng tọa độ an toàn và hiển thị thật
+      nd.style.top = top + 'px';
+      nd.style.left = left + 'px';
+      nd.style.visibility = 'visible';
+  });
+
+  document.addEventListener('mouseout', function(e) {
+      let voBoc = e.target.closest('.voBocYk');
+      if (!voBoc) return;
+      
+      // Điều kiện an toàn: Không ẩn nếu chuột vẫn đang thao tác bên trong khung nội dung nổi
+      if (voBoc.contains(e.relatedTarget)) return;
+      
+      let nd = voBoc.querySelector('.ndYk');
+      if (nd) {
+          // Xóa toàn bộ style nội tuyến để trả về trạng thái nguyên bản
+          nd.style.display = '';
+          nd.style.position = '';
+          nd.style.top = '';
+          nd.style.left = '';
+          nd.style.visibility = '';
+          nd.style.zIndex = '';
+          nd.style.width = '';
+          nd.style.maxWidth = '';
+      }
+  });
 </script>
