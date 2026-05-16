@@ -16,4 +16,4 @@ var PGV_GOOGLE_CLIENT_ID = "407480994586-m6fpq6sfcc90qqj9k08rsmi1lge6br94.apps.g
 var PGV_MO_TA = "Hệ thống quản lý hiệu quả công việc nội bộ - " + PGV_TEN_TRUONG;
 
 // --- CÁC LIÊN KẾT MỞ RỘNG (KHÔNG ĐỂ LINK CỨNG TRONG HTML) ---
-var PGV_LINK_DGC_NAM = "https://quanlylaocai.github.io/danhgiacuoinam/index.html";
+var PGV_LINK_DGC_NAM = "https://gdlaocai.github.io/he-thong/DanhGiaVienChuc/index.html";
