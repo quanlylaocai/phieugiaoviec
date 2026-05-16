@@ -11,15 +11,15 @@
   
   <script>
     /* ========================================================================= */
-    /* KHỞI TẠO TẢI TỆP CẤU HÌNH AN TOÀN (THAY THẾ DOCUMENT.WRITE)               */
-    /* Đảm bảo tuân thủ nguyên tắc ngăn chặn theo dõi web chéo của Google Chrome */
+    /* KHỞI TẠO TẢI TỆP CẤU HÌNH AN TOÀN (CHỐNG CẢNH BÁO ĐỎ & LỖI OAUTH)         */
     /* ========================================================================= */
     (function() {
         var script = document.createElement('script');
         script.src = 'ketnoi.js?v=' + new Date().getTime();
         script.onload = function() {
             khoiTaoTieuDeCaHinh();
-            applyPGVConfig(); // Áp dụng ngay sau khi tải xong cấu hình
+            applyPGVConfig();
+            khoiTaoGoogleSignIn(); // Đảm bảo ketnoi.js tải xong mới gọi nút Đăng nhập
         };
         document.head.appendChild(script);
     })();
@@ -39,7 +39,27 @@
     }
 
     /* ==========================================================================
-       INTERNAL API BRIDGE (CẦU NỐI GIAO TIẾP MÁY CHỦ BẢO MẬT)
+       HÀM KHỞI TẠO GOOGLE SIGN-IN BẰNG JAVASCRIPT API (KHẮC PHỤC LỖI 400)
+       ========================================================================== */
+    function khoiTaoGoogleSignIn() {
+        if (typeof google !== 'undefined' && google.accounts && typeof PGV_GOOGLE_CLIENT_ID !== 'undefined') {
+            google.accounts.id.initialize({
+                client_id: PGV_GOOGLE_CLIENT_ID,
+                callback: xulyPhienDn,
+                auto_prompt: false
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("nut_dang_nhap_google"),
+                { theme: "outline", size: "large", type: "standard", text: "continue_with", shape: "rectangular", logo_alignment: "left" }
+            );
+        } else {
+            // Đợi thư viện Google tải xong nếu mạng bị trễ
+            setTimeout(khoiTaoGoogleSignIn, 100);
+        }
+    }
+
+    /* ==========================================================================
+       INTERNAL API BRIDGE
        ========================================================================== */
     window.khachApi = {
         yeucauApi: function(hdong, tdtai, khiTcong, khiLoi) {
@@ -87,7 +107,6 @@
     body { background-color: transparent; min-height: 100vh; overflow: hidden; margin: 0; padding: 0; }
     body::after { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 251, 240, 0.6); z-index: -1; pointer-events: none; }
 
-    /* Bố cục Flexbox chia dọc thay vì ngang */
     .bo-cuc-tong { display: flex; width: 100%; align-items: stretch; min-height: 100vh; }
     .k-ngoai { flex: 1; padding: 0px 20px 20px 0; position: relative; width: calc(100% - 300px); box-sizing: border-box; margin: 0; overflow-y: auto;}
 
@@ -103,7 +122,7 @@
     .khuTheDev { position: fixed; bottom: 0px; left: 20px; z-index: 9999; display: flex; align-items: center; gap: 10px; padding: 6px 16px; background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%); border-radius: 50px; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3); color: white; cursor: default; user-select: none; }
     .khuTheDev:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(13, 110, 253, 0.5); }
     .cotChuDev { display: flex; flex-direction: column; line-height: 1.1; text-align: left; }
-    .tenDev { font-weight: 800; font-size: 13px; color: #ffeb3b; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); white-space: pre-line; }
+    .tenDev { font-weight: 800; font-size: 13px; color: #ffeb3b; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); white-space: pre-line;}
     .vtDev { font-weight: 500; font-size: 10px; color: #ffffff; opacity: 0.95; margin-top: 2px; }
     .btuongDev { background: rgba(255, 255, 255, 0.25); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.1); }
     .btuongDev i { font-size: 18px; }
@@ -168,10 +187,7 @@
         
         <p class="text-muted small mb-4">Hệ thống nội bộ. Vui lòng xác thực phiên làm việc để tiếp tục.</p>
         
-        <div id="g_id_onload" data-callback="xulyPhienDn" data-auto_prompt="false"></div>
-        <div class="d-flex justify-content-center w-100 mt-2">
-           <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="continue_with" data-shape="rectangular" data-logo_alignment="left"></div>
-        </div>
+        <div id="nut_dang_nhap_google" class="d-flex justify-content-center w-100 mt-2"></div>
 
         <div class="mt-3 px-2">
            <p class="text-success fw-bold mb-0" style="font-size: 13px; line-height: 1.4; padding: 10px; background: #e8f5e9; border-radius: 6px; border: 1px dashed #4caf50;">
@@ -256,28 +272,17 @@
        ========================================================================== */
     function applyPGVConfig() {
         if(typeof PGV_LINK_LOGO !== 'undefined') {
-            let lg = document.getElementById('login_logo'); if(lg) lg.src = PGV_LINK_LOGO;
-            let mg = document.getElementById('modal_logo'); if(mg) mg.src = PGV_LINK_LOGO;
+            document.getElementById('login_logo').src = PGV_LINK_LOGO;
+            document.getElementById('modal_logo').src = PGV_LINK_LOGO;
         }
-        if(typeof PGV_TEN_PM_UP !== 'undefined') {
-            let appName = document.getElementById('login_app_name'); if(appName) appName.innerText = PGV_TEN_PM_UP;
-        }
-        if(typeof PGV_TEN_TRUONG !== 'undefined') {
-            let schName = document.getElementById('login_school_name'); if(schName) schName.innerText = PGV_TEN_TRUONG;
-        }
-        if(typeof PGV_PHIEN_BAN !== 'undefined') {
-            let ver = document.getElementById('login_version'); if(ver) ver.innerText = PGV_PHIEN_BAN;
-        }
+        if(typeof PGV_TEN_PM_UP !== 'undefined') document.getElementById('login_app_name').innerText = PGV_TEN_PM_UP;
+        if(typeof PGV_TEN_TRUONG !== 'undefined') document.getElementById('login_school_name').innerText = PGV_TEN_TRUONG;
+        if(typeof PGV_PHIEN_BAN !== 'undefined') document.getElementById('login_version').innerText = PGV_PHIEN_BAN;
         if(typeof PGV_TAC_GIA !== 'undefined') {
-            let author1 = document.getElementById('login_author'); if(author1) author1.innerText = PGV_TAC_GIA;
-            let author2 = document.getElementById('dev_author_name'); if(author2) author2.innerText = PGV_TAC_GIA;
-        }
-        if(typeof PGV_GOOGLE_CLIENT_ID !== 'undefined') {
-            let client = document.getElementById('g_id_onload'); if(client) client.setAttribute('data-client_id', PGV_GOOGLE_CLIENT_ID);
+            document.getElementById('login_author').innerText = PGV_TAC_GIA;
+            document.getElementById('dev_author_name').innerText = PGV_TAC_GIA;
         }
     }
-    
-    // Đã gọi trong onLoad để đảm bảo đồng bộ chuẩn xác
 
     /* ==========================================================================
        KHỐI BẪY LỖI TOÀN CỤC CHỐNG TREO MÀN HÌNH TRÊN DI ĐỘNG
@@ -415,13 +420,8 @@
         document.getElementById('khuYkien').innerHTML = await phYKien.text();
         document.getElementById('khuBaoCao').innerHTML = await phBaoCao.text();
         
-        // ĐỒNG BỘ ID VÀO MENU NGAY SAU KHI TẢI XONG
-        if (typeof PGV_LINK_LOGO !== 'undefined') {
-            let mLogo = document.getElementById('menu_logo'); if(mLogo) mLogo.src = PGV_LINK_LOGO;
-        }
-        if (typeof PGV_TEN_TRUONG !== 'undefined') {
-            let mSchool = document.getElementById('menu_school_name'); if(mSchool) mSchool.innerText = PGV_TEN_TRUONG;
-        }
+        if (typeof PGV_LINK_LOGO !== 'undefined') document.getElementById('menu_logo').src = PGV_LINK_LOGO;
+        if (typeof PGV_TEN_TRUONG !== 'undefined') document.getElementById('menu_school_name').innerText = PGV_TEN_TRUONG;
         if (typeof PGV_LINK_DGC_NAM !== 'undefined') {
             let mLink = document.getElementById('menu_link_dgc'); if(mLink) mLink.href = PGV_LINK_DGC_NAM;
         }
