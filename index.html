@@ -11,65 +11,38 @@
   
   <script>
     /* ========================================================================= */
-    /* KHỞI TẠO TẢI TỆP CẤU HÌNH AN TOÀN (CHỐNG CẢNH BÁO ĐỎ & LỖI OAUTH)         */
+    /* KHỞI TẠO TẢI TỆP CẤU HÌNH BẰNG DOM (CHỐNG CHẶN TRÊN MOBILE/SAFARI)        */
     /* ========================================================================= */
     (function() {
         var script = document.createElement('script');
         script.src = 'ketnoi.js?v=' + new Date().getTime();
-        script.onload = function() {
-            khoiTaoTieuDeCaHinh();
-            applyPGVConfig();
-            khoiTaoGoogleSignIn(); // Đảm bảo ketnoi.js tải xong mới gọi nút Đăng nhập
-        };
         document.head.appendChild(script);
     })();
-
-    function khoiTaoTieuDeCaHinh() {
-        var metaDesc = document.createElement('meta');
-        metaDesc.name = "description";
-        metaDesc.content = (typeof PGV_MO_TA !== 'undefined') ? PGV_MO_TA : "";
-        document.head.appendChild(metaDesc);
-        
-        document.title = ((typeof PGV_TEN_PM !== 'undefined') ? PGV_TEN_PM : "Quản lý") + " - " + ((typeof PGV_TEN_TRUONG !== 'undefined') ? PGV_TEN_TRUONG : "");
-        
-        var linkIcon = document.getElementById('page_favicon');
-        if (linkIcon && typeof PGV_LINK_LOGO !== 'undefined') {
-            linkIcon.href = PGV_LINK_LOGO;
-        }
-    }
-
+  </script>
+  
+  <script>
     /* ==========================================================================
-       HÀM KHỞI TẠO GOOGLE SIGN-IN BẰNG JAVASCRIPT API (KHẮC PHỤC LỖI 400)
-       ========================================================================== */
-    function khoiTaoGoogleSignIn() {
-        if (typeof google !== 'undefined' && google.accounts && typeof PGV_GOOGLE_CLIENT_ID !== 'undefined') {
-            google.accounts.id.initialize({
-                client_id: PGV_GOOGLE_CLIENT_ID,
-                callback: xulyPhienDn,
-                auto_prompt: false
-            });
-            google.accounts.id.renderButton(
-                document.getElementById("nut_dang_nhap_google"),
-                { theme: "outline", size: "large", type: "standard", text: "continue_with", shape: "rectangular", logo_alignment: "left" }
-            );
-        } else {
-            // Đợi thư viện Google tải xong nếu mạng bị trễ
-            setTimeout(khoiTaoGoogleSignIn, 100);
-        }
-    }
-
-    /* ==========================================================================
-       INTERNAL API BRIDGE
+       INTERNAL API BRIDGE (ĐÃ BỔ SUNG CƠ CHẾ CHỜ CHUYỂN HƯỚNG BẢO MẬT)
        ========================================================================== */
     window.khachApi = {
         yeucauApi: function(hdong, tdtai, khiTcong, khiLoi) {
+            // Chống gọi máy chủ khi ketnoi.js chưa định hình
+            if (typeof ddungApi === 'undefined' || !ddungApi) {
+                if (khiLoi) khiLoi(new Error("Chưa tải được liên kết máy chủ. Vui lòng tải lại trang."));
+                return;
+            }
             var dlieu = { hdong: hdong, token: window.PGV_TOKEN, ...tdtai };
-            fetch((typeof ddungApi !== 'undefined' ? ddungApi : ""), {
+            
+            fetch(ddungApi, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify(dlieu)
+                body: JSON.stringify(dlieu),
+                redirect: 'follow' // QUAN TRỌNG: Ép trình duyệt đi theo luồng 302 của Apps Script
             })
-            .then(function(ph) { return ph.json(); })
+            .then(function(ph) { 
+                if (!ph.ok) throw new Error("Mã phản hồi HTTP: " + ph.status);
+                return ph.json(); 
+            })
             .then(function(kq) {
                 if (kq.ttai === 'loi') {
                     if (khiLoi) khiLoi(new Error(kq.tbao));
@@ -99,8 +72,6 @@
         ghiKetQuaThop: function(dl, khiTcong, khiLoi) { this.yeucauApi("ghiketquathop", { dldeu: dl }, khiTcong, khiLoi); }
     };
   </script>
-  
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
     body, input, select, textarea, button, table { font-family: 'Times New Roman', Times, serif !important; font-size: 14px; }
@@ -122,7 +93,7 @@
     .khuTheDev { position: fixed; bottom: 0px; left: 20px; z-index: 9999; display: flex; align-items: center; gap: 10px; padding: 6px 16px; background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%); border-radius: 50px; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3); color: white; cursor: default; user-select: none; }
     .khuTheDev:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(13, 110, 253, 0.5); }
     .cotChuDev { display: flex; flex-direction: column; line-height: 1.1; text-align: left; }
-    .tenDev { font-weight: 800; font-size: 13px; color: #ffeb3b; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); white-space: pre-line;}
+    .tenDev { font-weight: 800; font-size: 13px; color: #ffeb3b; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); white-space: pre-line; }
     .vtDev { font-weight: 500; font-size: 10px; color: #ffffff; opacity: 0.95; margin-top: 2px; }
     .btuongDev { background: rgba(255, 255, 255, 0.25); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.1); }
     .btuongDev i { font-size: 18px; }
@@ -187,7 +158,10 @@
         
         <p class="text-muted small mb-4">Hệ thống nội bộ. Vui lòng xác thực phiên làm việc để tiếp tục.</p>
         
-        <div id="nut_dang_nhap_google" class="d-flex justify-content-center w-100 mt-2"></div>
+        <div id="g_id_onload" data-callback="xulyPhienDn" data-auto_prompt="false"></div>
+        <div class="d-flex justify-content-center w-100 mt-2">
+           <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="continue_with" data-shape="rectangular" data-logo_alignment="left"></div>
+        </div>
 
         <div class="mt-3 px-2">
            <p class="text-success fw-bold mb-0" style="font-size: 13px; line-height: 1.4; padding: 10px; background: #e8f5e9; border-radius: 6px; border: 1px dashed #4caf50;">
@@ -362,18 +336,65 @@
     function kiemtDungt() {
       return true; 
     }
-    
+
+    /* ==========================================================================
+       HÀM ĐIỀU KHIỂN LUỒNG HOẠT ĐỘNG CHÍNH (THAY THẾ $(DOCUMENT).READY CŨ)
+       ========================================================================== */
     $(document).ready(function() {
       if (!kiemtDungt()) return; 
-      const tkluuhd = sessionStorage.getItem("MA_PBAN_HT");
-      const tokenluu = sessionStorage.getItem("PGV_TOKEN"); 
-      if(tkluuhd && tokenluu) { 
-          window.PGV_ID_TC = tkluuhd; 
-          window.PGV_TOKEN = tokenluu;
-          document.getElementById('manhChao').style.display = 'none'; 
-          chbiHt(); 
-      } 
-      else { document.getElementById('manhChao').style.display = 'flex'; }
+      
+      // Khởi tạo vòng lặp kiểm tra trạng thái tải của ketnoi.js
+      var kiemTraKetNoiTai = setInterval(function() {
+          if (typeof ddungApi !== 'undefined' && typeof PGV_GOOGLE_CLIENT_ID !== 'undefined') {
+              clearInterval(kiemTraKetNoiTai);
+              
+              // 1. Áp dụng thông tin giao diện từ ketnoi.js
+              applyPGVConfig();
+              
+              var metaDesc = document.createElement('meta');
+              metaDesc.name = "description";
+              metaDesc.content = (typeof PGV_MO_TA !== 'undefined') ? PGV_MO_TA : "";
+              document.head.appendChild(metaDesc);
+              
+              document.title = (typeof PGV_TEN_PM !== 'undefined' ? PGV_TEN_PM : "Quản lý") + " - " + (typeof PGV_TEN_TRUONG !== 'undefined' ? PGV_TEN_TRUONG : "");
+              if (typeof PGV_LINK_LOGO !== 'undefined') {
+                  var linkIcon = document.getElementById('page_favicon');
+                  if (linkIcon) linkIcon.href = PGV_LINK_LOGO;
+              }
+
+              // 2. Gán Client ID và tải Google API Động
+              var gIdL = document.getElementById('g_id_onload');
+              if (gIdL) gIdL.setAttribute('data-client_id', PGV_GOOGLE_CLIENT_ID);
+              
+              var scriptGSI = document.createElement('script');
+              scriptGSI.src = "https://accounts.google.com/gsi/client";
+              scriptGSI.async = true;
+              scriptGSI.defer = true;
+              document.body.appendChild(scriptGSI);
+
+              // 3. Khởi động kiểm tra phiên làm việc
+              const tkluuhd = sessionStorage.getItem("MA_PBAN_HT");
+              const tokenluu = sessionStorage.getItem("PGV_TOKEN"); 
+              if(tkluuhd && tokenluu) { 
+                  window.PGV_ID_TC = tkluuhd; 
+                  window.PGV_TOKEN = tokenluu;
+                  document.getElementById('manhChao').style.display = 'none'; 
+                  chbiHt(); 
+              } 
+              else { 
+                  document.getElementById('manhChao').style.display = 'flex'; 
+              }
+          }
+      }, 50);
+
+      // Cảnh báo nếu quá 10 giây mà ketnoi.js vẫn bị trình duyệt chặn
+      setTimeout(function() {
+          if (typeof ddungApi === 'undefined') {
+              clearInterval(kiemTraKetNoiTai);
+              document.getElementById('hopLoi').style.display = 'block';
+              document.getElementById('hopLoi').innerHTML = "<strong>LỖI NGHIÊM TRỌNG:</strong> Không tải được tệp cấu hình (ketnoi.js). Trình duyệt của bạn đang chặn script. Vui lòng tắt các tiện ích chặn quảng cáo hoặc xóa cache.";
+          }
+      }, 10000);
     });
 
     async function chbiHt() {
